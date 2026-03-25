@@ -3,27 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Roaming Cat Game</title>
+    <title>Fat Cat: Golden Rush</title>
     <style>
-        body { margin: 0; overflow: hidden; background-color: #a2d149; font-family: sans-serif; touch-action: none; transition: background-color 0.1s; }
-        #game-ui { position: fixed; top: 10px; width: 100%; display: flex; justify-content: space-around; font-weight: bold; font-size: 22px; z-index: 10; color: white; text-shadow: 2px 2px 4px #000; }
-        .sprite { position: absolute; display: flex; justify-content: center; align-items: center; transition: transform 0.1s linear; }
-        #cat { font-size: 60px; z-index: 5; }
-        #msg { position: fixed; top: 50%; width: 100%; text-align: center; font-size: 30px; display: none; background: rgba(0,0,0,0.8); color: white; padding: 20px 0; z-index: 20; }
-        .tree { font-size: 100px; z-index: 2; opacity: 1; transition: opacity 0.3s; }
+        body { margin: 0; overflow: hidden; background-color: #7ab02c; font-family: 'Segoe UI', sans-serif; touch-action: none; transition: background-color 0.1s; }
+        #game-ui { position: fixed; top: 10px; width: 100%; display: flex; justify-content: space-around; font-weight: bold; font-size: 24px; z-index: 10; color: white; text-shadow: 2px 2px 4px #000; }
+        .sprite { position: absolute; display: flex; justify-content: center; align-items: center; pointer-events: none; }
+        #cat { font-size: 60px; z-index: 5; transition: left 0.1s linear, top 0.1s linear; }
+        #msg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; background: rgba(0,0,0,0.8); color: white; z-index: 20; text-align: center; }
+        .tree { font-size: 100px; z-index: 2; opacity: 1; transition: opacity 0.3s, left 0.5s, top 0.5s; }
         .yarn { font-size: 40px; }
+        .gold-yarn { font-size: 60px; filter: drop-shadow(0 0 10px gold); z-index: 6; }
         .water { font-size: 50px; }
-        .flash { background-color: white !important; }
+        .flash { background-color: #ff4757 !important; } /* Red flash for water hit */
+        button { padding: 15px 30px; font-size: 20px; border-radius: 10px; border: none; background: #ff4757; color: white; cursor: pointer; margin-top: 20px; }
     </style>
 </head>
 <body>
 
     <div id="game-ui">
-        <div>Time: <span id="timer">60</span></div>
-        <div>Score: <span id="score">0</span></div>
+        <div>⏳ <span id="timer">60</span>s</div>
+        <div>🧶 <span id="score">0</span></div>
     </div>
 
-    <div id="msg">TAP TO START</div>
+    <div id="msg">
+        <h1>FAT CAT CHASE</h1>
+        <p>Tilt to move. Avoid water!<br>Trees move when you get wet.</p>
+        <button id="start-btn">START GAME</button>
+    </div>
+
     <div id="cat" class="sprite">🐈</div>
 
     <script>
@@ -31,26 +38,23 @@
         const scoreEl = document.getElementById('score');
         const timerEl = document.getElementById('timer');
         const msg = document.getElementById('msg');
+        const startBtn = document.getElementById('start-btn');
 
         let score = 0;
         let timeLeft = 60;
         let active = false;
         let isFlashing = false;
+        let goldSpawned = false;
         
         let catX = window.innerWidth / 2;
         let catY = window.innerHeight / 2;
-        let items = []; // Stores yarn and water
+        let items = []; 
         let trees = [];
 
         function init() {
-            // Create 5 Yarn (speed ~2-3)
             for(let i=0; i<5; i++) createRoamingItem('yarn', '🧶', 2.5);
-            // Create 1 Water (speed ~1.5)
-            createRoamingItem('water', '💧', 1.5);
-            // Create 5 Huge Trees
+            createRoamingItem('water', '💧', 1.8);
             spawnTrees();
-            
-            msg.style.display = 'block';
             requestAnimationFrame(gameLoop);
         }
 
@@ -59,12 +63,10 @@
             el.className = 'sprite ' + type;
             el.innerHTML = emoji;
             document.body.appendChild(el);
-            
             items.push({
-                el: el,
-                type: type,
-                x: Math.random() * window.innerWidth,
-                y: Math.random() * window.innerHeight,
+                el, type, speed,
+                x: Math.random() * (window.innerWidth - 50),
+                y: Math.random() * (window.innerHeight - 100) + 50,
                 dx: (Math.random() - 0.5) * speed,
                 dy: (Math.random() - 0.5) * speed
             });
@@ -78,30 +80,25 @@
                 el.className = 'sprite tree';
                 el.innerHTML = '🌲';
                 document.body.appendChild(el);
-                
-                // Ensure trees are spread out (at least 120px apart)
-                let tx, ty;
-                let overlap = true;
-                while(overlap) {
-                    tx = Math.random() * (window.innerWidth - 100);
-                    ty = Math.random() * (window.innerHeight - 200) + 100;
-                    overlap = trees.some(t => Math.hypot(tx - t.x, ty - t.y) < 120);
-                }
-                
+                let tx, ty, tooClose;
+                do {
+                    tx = Math.random() * (window.innerWidth - 80);
+                    ty = Math.random() * (window.innerHeight - 150) + 80;
+                    tooClose = trees.some(t => Math.hypot(tx - t.x, ty - t.y) < 130) || Math.hypot(tx - catX, ty - catY) < 150;
+                } while(tooClose);
                 el.style.left = tx + 'px';
                 el.style.top = ty + 'px';
                 trees.push({el, x: tx, y: ty});
             }
         }
 
-        // Handle Tilt
         window.addEventListener('deviceorientation', (e) => {
             if (!active || isFlashing) return;
-            let nextX = catX + (e.gamma * 0.9);
-            let nextY = catY + (e.beta * 0.9);
+            // Sensitivity adjustment
+            let nextX = catX + (e.gamma * 1.2);
+            let nextY = catY + (e.beta * 1.2);
 
-            // Tree collision
-            let hitTree = trees.some(t => Math.hypot(nextX - t.x, nextY - t.y) < 60);
+            let hitTree = trees.some(t => Math.hypot(nextX + 30 - (t.x + 50), nextY + 30 - (t.y + 50)) < 65);
             if (!hitTree) {
                 catX = Math.max(0, Math.min(window.innerWidth - 60, nextX));
                 catY = Math.max(60, Math.min(window.innerHeight - 60, nextY));
@@ -112,24 +109,28 @@
 
         function gameLoop() {
             if (active && !isFlashing) {
+                // Spawn Golden Yarn at 10 seconds
+                if (timeLeft <= 10 && !goldSpawned) {
+                    createRoamingItem('gold-yarn', '🌟', 6);
+                    goldSpawned = true;
+                }
+
                 items.forEach(item => {
-                    // Move
                     item.x += item.dx;
                     item.y += item.dy;
-
-                    // Bounce off walls
-                    if (item.x <= 0 || item.x >= window.innerWidth - 40) item.dx *= -1;
-                    if (item.y <= 60 || item.y >= window.innerHeight - 40) item.dy *= -1;
-
+                    if (item.x <= 0 || item.x >= window.innerWidth - 50) item.dx *= -1;
+                    if (item.y <= 60 || item.y >= window.innerHeight - 60) item.dy *= -1;
                     item.el.style.left = item.x + 'px';
                     item.el.style.top = item.y + 'px';
 
-                    // Collisions
-                    let dist = Math.hypot(catX - item.x, catY - item.y);
-                    if (dist < 50) {
+                    if (Math.hypot(catX - item.x, catY - item.y) < 55) {
                         if (item.type === 'yarn') {
                             score++;
                             respawnItem(item);
+                        } else if (item.type === 'gold-yarn') {
+                            score += 10;
+                            item.el.remove();
+                            items = items.filter(i => i !== item);
                         } else if (item.type === 'water') {
                             triggerWaterHit();
                         }
@@ -143,44 +144,38 @@
         function triggerWaterHit() {
             isFlashing = true;
             score = Math.max(0, score - 3);
-            
-            // Fade trees out
             trees.forEach(t => t.el.style.opacity = '0');
-
-            // Flash effect (3 times)
-            let flashes = 0;
-            let interval = setInterval(() => {
+            let f = 0;
+            let inv = setInterval(() => {
                 document.body.classList.toggle('flash');
-                flashes++;
-                if (flashes === 6) {
-                    clearInterval(interval);
+                if (++f === 6) {
+                    clearInterval(inv);
                     document.body.classList.remove('flash');
-                    spawnTrees(); // Reaper trees elsewhere
+                    spawnTrees();
                     isFlashing = false;
                 }
-            }, 150);
-
-            // Move the water away immediately
+            }, 100).then;
             items.filter(i => i.type === 'water').forEach(w => respawnItem(w));
         }
 
         function respawnItem(item) {
             item.x = Math.random() * (window.innerWidth - 50);
-            item.y = Math.random() * (window.innerHeight - 100) + 60;
+            item.y = Math.random() * (window.innerHeight - 120) + 60;
         }
 
-        msg.onclick = () => {
+        startBtn.onclick = () => {
             if (timeLeft <= 0) location.reload();
             active = true;
             msg.style.display = 'none';
-            setInterval(() => {
+            let timerInterval = setInterval(() => {
                 if(active && !isFlashing) {
                     timeLeft--;
                     timerEl.innerText = timeLeft;
                     if (timeLeft <= 0) {
+                        clearInterval(timerInterval);
                         active = false;
-                        msg.innerHTML = "FINAL SCORE: " + score + "<br>TAP TO RESTART";
-                        msg.style.display = 'block';
+                        msg.innerHTML = `<h1>TIME'S UP!</h1><p>Final Score: ${score}</p><button onclick="location.reload()">PLAY AGAIN</button>`;
+                        msg.style.display = 'flex';
                     }
                 }
             }, 1000);
