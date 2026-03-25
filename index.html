@@ -3,131 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PussyTilt Deluxe</title>
+    <title>PussyTilt: Cash Register Edition</title>
     <style>
-        :root { --gold: #f9ca24; --candy-pink: #ff4757; --grass: #7ab02c; }
-        body { margin: 0; overflow: hidden; background: radial-gradient(circle, #8bc34a, #689f38); font-family: 'Arial Rounded MT Bold', sans-serif; touch-action: none; transition: 0.1s; }
-        
-        /* UI Candy */
-        #game-ui { position: fixed; top: 15px; width: 100%; display: flex; justify-content: space-around; font-size: 26px; z-index: 10; color: white; text-shadow: 3px 3px 0px rgba(0,0,0,0.2); pointer-events: none; }
-        .score-pop { animation: pop 0.3s ease-out; }
-        @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.4); } 100% { transform: scale(1); } }
-
-        /* Sprites */
+        :root { --gold: #f9ca24; --diamond: #70a1ff; }
+        body { margin: 0; overflow: hidden; background-color: #7cb342; background-image: radial-gradient(#ffffff 2px, transparent 2px), radial-gradient(#f9ca24 2px, transparent 2px); background-size: 50px 50px; background-position: 0 0, 25px 25px; font-family: 'Arial Rounded MT Bold', sans-serif; touch-action: none; }
+        #game-ui { position: fixed; top: 15px; width: 100%; display: flex; justify-content: space-around; font-size: 26px; z-index: 10; color: white; text-shadow: 3px 3px 0px rgba(0,0,0,0.3); pointer-events: none; }
         .sprite { position: absolute; display: flex; justify-content: center; align-items: center; pointer-events: none; transform: translate(-50%, -50%); }
-        #cat { font-size: 70px; z-index: 5; filter: drop-shadow(0 5px 15px rgba(0,0,0,0.3)); }
-        .tree { font-size: 110px; z-index: 2; transition: opacity 0.4s, transform 0.4s; }
-        .yarn { font-size: 45px; filter: drop-shadow(0 3px 5px rgba(0,0,0,0.2)); }
-        .gold-yarn { font-size: 90px; filter: drop-shadow(0 0 25px var(--gold)); z-index: 6; animation: spin 2s linear infinite; }
-        @keyframes spin { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(360deg); } }
-
-        /* Overlays */
-        #overlay { position: fixed; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; background: rgba(0,0,0,0.85); color: white; z-index: 30; text-align: center; padding: 20px; }
+        #cat { font-size: 70px; z-index: 5; filter: drop-shadow(0 5px 10px rgba(0,0,0,0.3)); }
+        .tree { font-size: 110px; z-index: 2; transition: opacity 0.4s; }
+        .yarn { font-size: 60px; }
+        .water { font-size: 30px; filter: drop-shadow(0 0 8px #2980b9); }
+        #overlay { position: fixed; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; background: rgba(0,0,0,0.9); color: white; z-index: 30; text-align: center; padding: 20px; }
         #video-container { position: fixed; inset: 0; background: black; display: none; z-index: 40; justify-content: center; align-items: center; }
         video { width: 100%; height: 100%; object-fit: cover; }
-
-        /* Buttons & Credits */
-        .btn { padding: 15px 35px; font-size: 20px; border-radius: 50px; border: none; color: white; margin: 8px; font-weight: bold; cursor: pointer; box-shadow: 0 6px 0 rgba(0,0,0,0.3); transition: 0.1s; width: 220px; }
-        .btn:active { transform: translateY(3px); box-shadow: 0 3px 0 rgba(0,0,0,0.3); }
+        .btn { padding: 15px 35px; font-size: 20px; border-radius: 50px; border: none; color: white; margin: 8px; font-weight: bold; width: 240px; box-shadow: 0 6px 0 rgba(0,0,0,0.3); }
         .btn-play { background: #4CAF50; }
         .btn-share { background: #008CBA; }
         .btn-donate { background: #e67e22; }
-        .credits { font-size: 14px; margin-top: 20px; color: #bbb; line-height: 1.6; }
         
+        #prize-stage { display: none; flex-direction: column; align-items: center; }
+        #diamond-btn { font-size: 100px; cursor: pointer; filter: drop-shadow(0 0 20px var(--diamond)); }
+        .expand-out { animation: fillScreen 0.6s forwards; }
+        @keyframes fillScreen { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(20); opacity: 0; } }
+
+        #wiz-box { background: #2c3e50; padding: 20px; border-radius: 20px; border: 4px solid var(--gold); display: none; margin-bottom: 20px; }
+        #lever-track { width: 300px; height: 35px; background: #444; border-radius: 10px; position: relative; margin: 20px 0; overflow: hidden; border: 3px solid #666;}
+        .edge-zone { width: 30px; height: 100%; background: #ff4757; position: absolute; }
+        #center-zone { width: 60px; height: 100%; background: #4CAF50; position: absolute; left: 120px; }
+        #lever-indicator { width: 10px; height: 100%; background: white; position: absolute; left: 0; z-index: 10; box-shadow: 0 0 10px white;}
         .flash-red { background: #ff4757 !important; }
-        .particle { position: absolute; width: 10px; height: 10px; border-radius: 50%; pointer-events: none; z-index: 10; }
     </style>
 </head>
 <body>
 
     <div id="game-ui">
-        <div id="t-box">⏳ <span id="timer">60</span>s</div>
-        <div id="s-box">🧶 <span id="score">0</span></div>
+        <div>⏳ <span id="timer">60</span>s</div>
+        <div>🧶 <span id="score">0</span></div>
         <div>🏆 <span id="high-score">0</span></div>
     </div>
 
-    <div id="video-container">
-        <video id="end-video" playsinline muted>
-            <source src="https://videos.pexels.com/video-files/3015488/3015488-uhd_2560_1440_24fps.mp4" type="video/mp4">
-        </video>
-    </div>
+    <div id="video-container"><video id="end-video" playsinline muted><source src="https://videos.pexels.com/video-files/3015488/3015488-uhd_2560_1440_24fps.mp4" type="video/mp4"></video></div>
 
     <div id="overlay">
-        <h1 style="font-size: 50px; color: var(--gold); margin: 10px;">PussyTilt</h1>
-        <p id="stats-display" style="font-size: 24px;"></p>
-        
-        <div id="menu-btns">
-            <button class="btn btn-play" id="start-btn">START</button>
+        <div id="main-menu">
+            <h1 style="font-size: 50px; color: var(--gold);">PussyTilt</h1>
+            <p id="stats-display" style="font-size: 24px;"></p>
+            <button class="btn btn-play" id="start-btn">START GAME</button>
+            <div style="font-size: 12px; margin-top: 20px; color: #888;">Tilt my Pussy | Kinetic Art Labs by Dr John Holder</div>
         </div>
 
-        <div class="credits">
-            <b>Tilt my Pussy</b><br>
-            Kinetic Art Labs by Dr John Holder
+        <div id="wiz-box">
+            <h2 style="color:var(--gold)">METRONOME METTLE</h2>
+            <div id="lever-track">
+                <div class="edge-zone" style="left:0"></div>
+                <div id="center-zone"></div>
+                <div class="edge-zone" style="right:0"></div>
+                <div id="lever-indicator"></div>
+            </div>
+            <button class="btn btn-play" id="wiz-stop">STOP!</button>
+        </div>
+
+        <div id="prize-stage">
+            <h2 id="prize-text" style="color:var(--gold); margin-bottom: 20px;">CLAIM YOUR PRIZE!</h2>
+            <div id="diamond-btn">💎</div>
         </div>
     </div>
 
     <div id="cat" class="sprite">🐈</div>
 
     <script>
-        const cat = document.getElementById('cat');
-        const scoreEl = document.getElementById('score');
-        const highScoreEl = document.getElementById('high-score');
-        const timerEl = document.getElementById('timer');
-        const overlay = document.getElementById('overlay');
-        const videoCont = document.getElementById('video-container');
-        const video = document.getElementById('end-video');
-        const startBtn = document.getElementById('start-btn');
-        const statsDisplay = document.getElementById('stats-display');
-        const menuBtns = document.getElementById('menu-btns');
-
-        let score = 0, timeLeft = 60, active = false, isFlashing = false, goldSpawned = false;
-        let catX = window.innerWidth / 2, catY = window.innerHeight / 2;
-        let items = [], trees = [];
+        const cat = document.getElementById('cat'), scoreEl = document.getElementById('score'), highScoreEl = document.getElementById('high-score'), timerEl = document.getElementById('timer'), overlay = document.getElementById('overlay'), videoCont = document.getElementById('video-container'), video = document.getElementById('end-video'), startBtn = document.getElementById('start-btn'), statsDisplay = document.getElementById('stats-display'), wizBox = document.getElementById('wiz-box'), mainMenu = document.getElementById('main-menu'), leverInd = document.getElementById('lever-indicator'), prizeStage = document.getElementById('prize-stage'), diamondBtn = document.getElementById('diamond-btn'), prizeText = document.getElementById('prize-text');
+        
+        let score = 0, timeLeft = 60, active = false, isFlashing = false, goldSpawned = false, catX = window.innerWidth / 2, catY = window.innerHeight / 2, items = [], trees = [];
+        let wizActive = false, leverPos = 0, leverDir = 1, currentBonus = 0;
 
         let highScore = localStorage.getItem('pt_deluxe_score') || 0;
         highScoreEl.innerText = highScore;
 
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-        function playSound(freq, type, dur, slide = 0) {
-            const osc = audioCtx.createOscillator();
-            const g = audioCtx.createGain();
-            osc.type = type;
-            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-            if(slide) osc.frequency.exponentialRampToValueAtTime(freq + slide, audioCtx.currentTime + dur);
-            g.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + dur);
-            osc.connect(g); g.connect(audioCtx.destination);
-            osc.start(); osc.stop(audioCtx.currentTime + dur);
+        function playSound(f, t, d, s = 0, vol = 0.1) {
+            const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+            o.type = t; o.frequency.setValueAtTime(f, audioCtx.currentTime);
+            if(s) o.frequency.exponentialRampToValueAtTime(f + s, audioCtx.currentTime + d);
+            g.gain.setValueAtTime(vol, audioCtx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + d);
+            o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime + d);
         }
 
-        function createParticles(x, y, color) {
-            for(let i=0; i<10; i++) {
-                const p = document.createElement('div');
-                p.className = 'particle';
-                p.style.backgroundColor = color;
-                p.style.left = x + 'px'; p.style.top = y + 'px';
-                document.body.appendChild(p);
-                const angle = Math.random() * Math.PI * 2;
-                const speed = Math.random() * 5 + 2;
-                let px = x, py = y;
-                const moveP = setInterval(() => {
-                    px += Math.cos(angle) * speed; py += Math.sin(angle) * speed;
-                    p.style.left = px + 'px'; p.style.top = py + 'px';
-                    p.style.opacity -= 0.05;
-                    if(p.style.opacity <= 0) { clearInterval(moveP); p.remove(); }
-                }, 20);
-            }
+        // --- OLD FASHIONED REGISTER DING ---
+        function playRegisterDing() {
+            // High clear bell note
+            playSound(1200, 'sine', 0.6, 0, 0.2);
+            // Higher harmonic chime
+            setTimeout(() => playSound(2400, 'sine', 0.3, 0, 0.1), 20);
         }
 
         function spawnTrees() {
             trees.forEach(t => t.el.remove()); trees = [];
             for(let i=0; i<5; i++) {
-                const el = document.createElement('div');
-                el.className = 'sprite tree'; el.innerHTML = '🌲';
-                document.body.appendChild(el);
-                let tx = Math.random() * (window.innerWidth - 100) + 50;
-                let ty = Math.random() * (window.innerHeight - 200) + 100;
+                const el = document.createElement('div'); el.className = 'sprite tree'; el.innerHTML = '🌲'; document.body.appendChild(el);
+                let tx = Math.random() * (window.innerWidth - 100) + 50, ty = Math.random() * (window.innerHeight - 200) + 100;
                 el.style.left = tx + 'px'; el.style.top = ty + 'px';
                 trees.push({el, x: tx, y: ty});
             }
@@ -137,7 +113,7 @@
             const el = document.createElement('div');
             el.className = 'sprite ' + type; el.innerHTML = emoji;
             document.body.appendChild(el);
-            items.push({ el, type, speed, x: Math.random()*window.innerWidth, y: Math.random()*window.innerHeight, dx: (Math.random()-0.5)*speed, dy: (Math.random()-0.5)*speed });
+            items.push({ el, type, baseSpeed: speed, x: Math.random()*window.innerWidth, y: Math.random()*window.innerHeight, dx: (Math.random()-0.5)*speed, dy: (Math.random()-0.5)*speed });
         }
 
         window.addEventListener('deviceorientation', (e) => {
@@ -151,91 +127,107 @@
 
         function gameLoop() {
             if (active && !isFlashing) {
+                const totalPassed = 60 - timeLeft;
+                const speedMult = 1.0 + (Math.abs(Math.sin(totalPassed * 0.2)) * 0.5); 
+                if(totalPassed >= 30) {
+                    let grow = 30 + ((totalPassed - 30) / 30) * 30;
+                    items.filter(i=>i.type==='water').forEach(w => w.el.style.fontSize = grow + 'px');
+                }
                 if (timeLeft <= 10 && !goldSpawned) { createItem('gold-yarn', '🌟', 6); goldSpawned = true; }
                 items.forEach(item => {
-                    item.x += item.dx; item.y += item.dy;
+                    let currentSpeed = item.type === 'yarn' ? item.baseSpeed * speedMult : item.baseSpeed;
+                    item.x += (item.dx / item.baseSpeed) * currentSpeed;
+                    item.y += (item.dy / item.baseSpeed) * currentSpeed;
                     if (item.x < 30 || item.x > window.innerWidth - 30) item.dx *= -1;
                     if (item.y < 30 || item.y > window.innerHeight - 30) item.dy *= -1;
                     item.el.style.left = item.x + 'px'; item.el.style.top = item.y + 'px';
-                    if (Math.hypot(catX - item.x, catY - item.y) < 60) {
-                        if (item.type === 'yarn') {
-                            score++; playSound(600, 'sine', 0.2, 300); createParticles(item.x, item.y, '#fff');
-                            respawnItem(item);
-                        } else if (item.type === 'gold-yarn') {
-                            score += 10; playSound(1000, 'triangle', 0.5, 500); item.el.remove();
-                            items = items.filter(i => i !== item);
-                        } else if (item.type === 'water') {
-                            triggerWaterHit();
-                        }
+                    let hitZone = item.type === 'water' ? (parseFloat(item.el.style.fontSize)||30) + 10 : 65; 
+                    if (Math.hypot(catX - item.x, catY - item.y) < hitZone) {
+                        if (item.type === 'yarn') { score++; playSound(600, 'sine', 0.2, 300); respawnItem(item); }
+                        else if (item.type === 'gold-yarn') { score += 10; playSound(1000, 'triangle', 0.5, 500); item.el.remove(); items = items.filter(i=>i!==item); }
+                        else if (item.type === 'water') { triggerWaterHit(); }
                         scoreEl.innerText = score;
-                        document.getElementById('s-box').classList.add('score-pop');
-                        setTimeout(() => document.getElementById('s-box').classList.remove('score-pop'), 300);
                     }
                 });
+            }
+            if(wizActive) {
+                leverPos += 9 * leverDir;
+                if(leverPos >= 290 || leverPos <= 0) {
+                    leverDir *= -1;
+                    playSound(200, 'sine', 0.04);
+                }
+                leverInd.style.left = leverPos + 'px';
             }
             requestAnimationFrame(gameLoop);
         }
 
         function triggerWaterHit() {
             isFlashing = true; score = Math.max(0, score - 3); playSound(100, 'sawtooth', 0.5, -50);
-            trees.forEach(t => t.el.style.opacity = '0');
             let f = 0; const inv = setInterval(() => {
                 document.body.classList.toggle('flash-red');
-                if (++f === 6) { clearInterval(inv); document.body.classList.remove('flash-red'); spawnTrees(); isFlashing = false; }
+                if (++f === 6) { clearInterval(inv); document.body.classList.remove('flash-red'); isFlashing = false; }
             }, 100);
             items.filter(i => i.type === 'water').forEach(w => respawnItem(w));
         }
 
         function respawnItem(item) {
-            item.x = Math.random() * (window.innerWidth - 60) + 30;
-            item.y = Math.random() * (window.innerHeight - 150) + 75;
+            item.x = Math.random() * (window.innerWidth - 60) + 30; item.y = Math.random() * (window.innerHeight - 150) + 75;
         }
+
+        startBtn.onclick = () => { audioCtx.resume(); mainMenu.style.display = 'none'; wizBox.style.display = 'block'; wizActive = true; };
+
+        document.getElementById('wiz-stop').onclick = () => {
+            wizActive = false;
+            if (leverPos >= 120 && leverPos <= 180) currentBonus = 10;
+            else if (leverPos <= 30 || leverPos >= 270) currentBonus = 5;
+            else currentBonus = 0;
+            
+            wizBox.style.display = 'none';
+            prizeText.innerText = currentBonus > 0 ? `CLAIM YOUR ${currentBonus} YARNS!` : "0 YARNS... BUT CLAIM YOUR DIAMOND!";
+            prizeStage.style.display = 'flex';
+        };
+
+        diamondBtn.onclick = () => {
+            playRegisterDing();
+            diamondBtn.classList.add('expand-out');
+            setTimeout(() => {
+                overlay.style.display = 'none';
+                score = currentBonus; scoreEl.innerText = score;
+                active = true; 
+                items = []; for(let i=0; i<3; i++) createItem('yarn', '🧶', 2.5); createItem('water', '💧', 1.8);
+                spawnTrees();
+                const t = setInterval(() => { if(active && !isFlashing) { timeLeft--; timerEl.innerText = timeLeft; if(timeLeft <= 0) { clearInterval(t); endGame(); } } }, 1000);
+            }, 600);
+        };
 
         function endGame() {
             active = false;
-            if(score > highScore) { highScore = score; localStorage.setItem('pt_deluxe_score', score); }
-            
-            // Show Video
-            videoCont.style.display = 'flex';
-            video.play();
-            
-            setTimeout(() => {
-                video.pause();
-                videoCont.style.display = 'none';
-                showFinalMenu();
-            }, 6000);
+            videoCont.style.display = 'flex'; video.play();
+            setTimeout(() => { video.pause(); videoCont.style.display = 'none'; showFinalMenu(); }, 6000);
         }
 
         function showFinalMenu() {
+            if(score > highScore) { highScore = score; localStorage.setItem('pt_deluxe_score', score); }
             statsDisplay.innerHTML = `GAME OVER<br>Score: ${score} | Best: ${highScore}`;
-            menuBtns.innerHTML = `
-                <button class="btn btn-play" onclick="location.reload()">PLAY AGAIN</button>
-                <button class="btn btn-share" id="sh-btn">SHARE</button>
-                <button class="btn btn-donate" onclick="window.open('https://paypal.me/yourlink','_blank')">DONATE</button>
-            `;
-            document.getElementById('sh-btn').onclick = () => {
-                const txt = `Can you beat me? I got ${score} in PussyTilt! ${window.location.href}`;
-                if (navigator.share) navigator.share({title: 'PussyTilt', text: txt, url: window.location.href});
-                else alert("Score copied!");
-            };
+            mainMenu.style.display = 'block';
+            prizeStage.style.display = 'none';
+            startBtn.innerText = "REPLAY";
             overlay.style.display = 'flex';
+            if(!document.getElementById('sh-btn')) {
+                const s = document.createElement('button'); s.className='btn btn-share'; s.id='sh-btn'; s.innerText='SHARE';
+                s.onclick = () => {
+                    const txt = `🐈 Can you beat me? I got 🧶 ${score} in PussyTilt!`;
+                    if (navigator.share) navigator.share({title: 'PussyTilt Score', text: txt, url: window.location.href});
+                    else { alert("Score copied!"); navigator.clipboard.writeText(txt + " " + window.location.href); }
+                };
+                const d = document.createElement('button'); d.className='btn btn-donate'; d.innerText='DONATE';
+                d.onclick = () => window.open('https://paypal.me/yourlink','_blank');
+                document.getElementById('main-menu').appendChild(s);
+                document.getElementById('main-menu').appendChild(d);
+            }
         }
 
-        startBtn.onclick = () => {
-            audioCtx.resume(); active = true; overlay.style.display = 'none';
-            items = []; 
-            for(let i=0; i<5; i++) createItem('yarn', '🧶', 2.5);
-            createItem('water', '💧', 1.8);
-            spawnTrees();
-            const t = setInterval(() => {
-                if(active && !isFlashing) {
-                    timeLeft--; timerEl.innerText = timeLeft;
-                    if(timeLeft <= 0) { clearInterval(t); endGame(); }
-                }
-            }, 1000);
-            requestAnimationFrame(gameLoop);
-        };
-
+        requestAnimationFrame(gameLoop);
     </script>
 </body>
 </html>
