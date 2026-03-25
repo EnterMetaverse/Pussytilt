@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tilt Tracker</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden; /* Stops the screen from scrolling */
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: sans-serif;
+        }
+
+        #dot {
+            width: 50px;
+            height: 50px;
+            background-color: #ff4757;
+            border-radius: 50%;
+            position: absolute;
+            transition: 0.1s linear; /* Makes the movement smooth */
+        }
+
+        #status {
+            position: fixed;
+            top: 20px;
+            text-align: center;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="status">Tilt your phone to move the dot!</div>
+    <div id="dot"></div>
+
+    <script>
+        const dot = document.getElementById('dot');
+        
+        // Starting position (center of screen)
+        let posX = window.innerWidth / 2;
+        let posY = window.innerHeight / 2;
+
+        // Listen for the device orientation (the tilt)
+        window.addEventListener('deviceorientation', (event) => {
+            // Gamma is left-to-right tilt (-90 to 90)
+            // Beta is front-to-back tilt (-180 to 180)
+            let x = event.gamma; 
+            let y = event.beta;  
+
+            // Constrain the movement so it stays on screen
+            // We multiply by 5 to make the movement more noticeable
+            posX = (window.innerWidth / 2) + (x * 5);
+            posY = (window.innerHeight / 2) + (y * 5);
+
+            // Move the dot!
+            dot.style.left = `${posX - 25}px`;
+            dot.style.top = `${posY - 25}px`;
+        });
+    </script>
+</body>
+</html>
+ 
