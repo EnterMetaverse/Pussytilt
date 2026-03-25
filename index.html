@@ -3,32 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Fat Cat: Golden Rush</title>
+    <title>PussyTilt Deluxe</title>
     <style>
-        body { margin: 0; overflow: hidden; background-color: #7ab02c; font-family: 'Segoe UI', sans-serif; touch-action: none; transition: background-color 0.1s; }
-        #game-ui { position: fixed; top: 10px; width: 100%; display: flex; justify-content: space-around; font-weight: bold; font-size: 24px; z-index: 10; color: white; text-shadow: 2px 2px 4px #000; }
-        .sprite { position: absolute; display: flex; justify-content: center; align-items: center; pointer-events: none; }
-        #cat { font-size: 60px; z-index: 5; transition: left 0.1s linear, top 0.1s linear; }
-        #msg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; background: rgba(0,0,0,0.8); color: white; z-index: 20; text-align: center; }
-        .tree { font-size: 100px; z-index: 2; opacity: 1; transition: opacity 0.3s, left 0.5s, top 0.5s; }
-        .yarn { font-size: 40px; }
-        .gold-yarn { font-size: 60px; filter: drop-shadow(0 0 10px gold); z-index: 6; }
-        .water { font-size: 50px; }
-        .flash { background-color: #ff4757 !important; } /* Red flash for water hit */
-        button { padding: 15px 30px; font-size: 20px; border-radius: 10px; border: none; background: #ff4757; color: white; cursor: pointer; margin-top: 20px; }
+        :root { --gold: #f9ca24; --candy-pink: #ff4757; --grass: #7ab02c; }
+        body { margin: 0; overflow: hidden; background: radial-gradient(circle, #8bc34a, #689f38); font-family: 'Arial Rounded MT Bold', sans-serif; touch-action: none; transition: 0.1s; }
+        
+        /* UI Candy */
+        #game-ui { position: fixed; top: 15px; width: 100%; display: flex; justify-content: space-around; font-size: 26px; z-index: 10; color: white; text-shadow: 3px 3px 0px rgba(0,0,0,0.2); pointer-events: none; }
+        .score-pop { animation: pop 0.3s ease-out; }
+        @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.4); } 100% { transform: scale(1); } }
+
+        /* Sprites */
+        .sprite { position: absolute; display: flex; justify-content: center; align-items: center; pointer-events: none; transform: translate(-50%, -50%); }
+        #cat { font-size: 70px; z-index: 5; filter: drop-shadow(0 5px 15px rgba(0,0,0,0.3)); }
+        .tree { font-size: 110px; z-index: 2; transition: opacity 0.4s, transform 0.4s; }
+        .yarn { font-size: 45px; filter: drop-shadow(0 3px 5px rgba(0,0,0,0.2)); }
+        .gold-yarn { font-size: 90px; filter: drop-shadow(0 0 25px var(--gold)); z-index: 6; animation: spin 2s linear infinite; }
+        @keyframes spin { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(360deg); } }
+
+        /* Overlays */
+        #overlay { position: fixed; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; background: rgba(0,0,0,0.85); color: white; z-index: 30; text-align: center; padding: 20px; }
+        #video-container { position: fixed; inset: 0; background: black; display: none; z-index: 40; justify-content: center; align-items: center; }
+        video { width: 100%; height: 100%; object-fit: cover; }
+
+        /* Buttons & Credits */
+        .btn { padding: 15px 35px; font-size: 20px; border-radius: 50px; border: none; color: white; margin: 8px; font-weight: bold; cursor: pointer; box-shadow: 0 6px 0 rgba(0,0,0,0.3); transition: 0.1s; width: 220px; }
+        .btn:active { transform: translateY(3px); box-shadow: 0 3px 0 rgba(0,0,0,0.3); }
+        .btn-play { background: #4CAF50; }
+        .btn-share { background: #008CBA; }
+        .btn-donate { background: #e67e22; }
+        .credits { font-size: 14px; margin-top: 20px; color: #bbb; line-height: 1.6; }
+        
+        .flash-red { background: #ff4757 !important; }
+        .particle { position: absolute; width: 10px; height: 10px; border-radius: 50%; pointer-events: none; z-index: 10; }
     </style>
 </head>
 <body>
 
     <div id="game-ui">
-        <div>⏳ <span id="timer">60</span>s</div>
-        <div>🧶 <span id="score">0</span></div>
+        <div id="t-box">⏳ <span id="timer">60</span>s</div>
+        <div id="s-box">🧶 <span id="score">0</span></div>
+        <div>🏆 <span id="high-score">0</span></div>
     </div>
 
-    <div id="msg">
-        <h1>FAT CAT CHASE</h1>
-        <p>Tilt to move. Avoid water!<br>Trees move when you get wet.</p>
-        <button id="start-btn">START GAME</button>
+    <div id="video-container">
+        <video id="end-video" playsinline muted>
+            <source src="https://videos.pexels.com/video-files/3015488/3015488-uhd_2560_1440_24fps.mp4" type="video/mp4">
+        </video>
+    </div>
+
+    <div id="overlay">
+        <h1 style="font-size: 50px; color: var(--gold); margin: 10px;">PussyTilt</h1>
+        <p id="stats-display" style="font-size: 24px;"></p>
+        
+        <div id="menu-btns">
+            <button class="btn btn-play" id="start-btn">START</button>
+        </div>
+
+        <div class="credits">
+            <b>Tilt my Pussy</b><br>
+            Kinetic Art Labs by Dr John Holder
+        </div>
     </div>
 
     <div id="cat" class="sprite">🐈</div>
@@ -36,105 +71,105 @@
     <script>
         const cat = document.getElementById('cat');
         const scoreEl = document.getElementById('score');
+        const highScoreEl = document.getElementById('high-score');
         const timerEl = document.getElementById('timer');
-        const msg = document.getElementById('msg');
+        const overlay = document.getElementById('overlay');
+        const videoCont = document.getElementById('video-container');
+        const video = document.getElementById('end-video');
         const startBtn = document.getElementById('start-btn');
+        const statsDisplay = document.getElementById('stats-display');
+        const menuBtns = document.getElementById('menu-btns');
 
-        let score = 0;
-        let timeLeft = 60;
-        let active = false;
-        let isFlashing = false;
-        let goldSpawned = false;
-        
-        let catX = window.innerWidth / 2;
-        let catY = window.innerHeight / 2;
-        let items = []; 
-        let trees = [];
+        let score = 0, timeLeft = 60, active = false, isFlashing = false, goldSpawned = false;
+        let catX = window.innerWidth / 2, catY = window.innerHeight / 2;
+        let items = [], trees = [];
 
-        function init() {
-            for(let i=0; i<5; i++) createRoamingItem('yarn', '🧶', 2.5);
-            createRoamingItem('water', '💧', 1.8);
-            spawnTrees();
-            requestAnimationFrame(gameLoop);
+        let highScore = localStorage.getItem('pt_deluxe_score') || 0;
+        highScoreEl.innerText = highScore;
+
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playSound(freq, type, dur, slide = 0) {
+            const osc = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            if(slide) osc.frequency.exponentialRampToValueAtTime(freq + slide, audioCtx.currentTime + dur);
+            g.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + dur);
+            osc.connect(g); g.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + dur);
         }
 
-        function createRoamingItem(type, emoji, speed) {
-            const el = document.createElement('div');
-            el.className = 'sprite ' + type;
-            el.innerHTML = emoji;
-            document.body.appendChild(el);
-            items.push({
-                el, type, speed,
-                x: Math.random() * (window.innerWidth - 50),
-                y: Math.random() * (window.innerHeight - 100) + 50,
-                dx: (Math.random() - 0.5) * speed,
-                dy: (Math.random() - 0.5) * speed
-            });
+        function createParticles(x, y, color) {
+            for(let i=0; i<10; i++) {
+                const p = document.createElement('div');
+                p.className = 'particle';
+                p.style.backgroundColor = color;
+                p.style.left = x + 'px'; p.style.top = y + 'px';
+                document.body.appendChild(p);
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 5 + 2;
+                let px = x, py = y;
+                const moveP = setInterval(() => {
+                    px += Math.cos(angle) * speed; py += Math.sin(angle) * speed;
+                    p.style.left = px + 'px'; p.style.top = py + 'px';
+                    p.style.opacity -= 0.05;
+                    if(p.style.opacity <= 0) { clearInterval(moveP); p.remove(); }
+                }, 20);
+            }
         }
 
         function spawnTrees() {
-            trees.forEach(t => t.el.remove());
-            trees = [];
+            trees.forEach(t => t.el.remove()); trees = [];
             for(let i=0; i<5; i++) {
                 const el = document.createElement('div');
-                el.className = 'sprite tree';
-                el.innerHTML = '🌲';
+                el.className = 'sprite tree'; el.innerHTML = '🌲';
                 document.body.appendChild(el);
-                let tx, ty, tooClose;
-                do {
-                    tx = Math.random() * (window.innerWidth - 80);
-                    ty = Math.random() * (window.innerHeight - 150) + 80;
-                    tooClose = trees.some(t => Math.hypot(tx - t.x, ty - t.y) < 130) || Math.hypot(tx - catX, ty - catY) < 150;
-                } while(tooClose);
-                el.style.left = tx + 'px';
-                el.style.top = ty + 'px';
+                let tx = Math.random() * (window.innerWidth - 100) + 50;
+                let ty = Math.random() * (window.innerHeight - 200) + 100;
+                el.style.left = tx + 'px'; el.style.top = ty + 'px';
                 trees.push({el, x: tx, y: ty});
             }
         }
 
+        function createItem(type, emoji, speed) {
+            const el = document.createElement('div');
+            el.className = 'sprite ' + type; el.innerHTML = emoji;
+            document.body.appendChild(el);
+            items.push({ el, type, speed, x: Math.random()*window.innerWidth, y: Math.random()*window.innerHeight, dx: (Math.random()-0.5)*speed, dy: (Math.random()-0.5)*speed });
+        }
+
         window.addEventListener('deviceorientation', (e) => {
             if (!active || isFlashing) return;
-            // Sensitivity adjustment
-            let nextX = catX + (e.gamma * 1.2);
-            let nextY = catY + (e.beta * 1.2);
-
-            let hitTree = trees.some(t => Math.hypot(nextX + 30 - (t.x + 50), nextY + 30 - (t.y + 50)) < 65);
-            if (!hitTree) {
-                catX = Math.max(0, Math.min(window.innerWidth - 60, nextX));
-                catY = Math.max(60, Math.min(window.innerHeight - 60, nextY));
-                cat.style.left = catX + 'px';
-                cat.style.top = catY + 'px';
-            }
+            catX += (e.gamma * 1.8); catY += (e.beta * 1.8);
+            trees.forEach(t => { if (Math.hypot(catX - t.x, catY - t.y) < 80) { catX -= (e.gamma * 1.8); catY -= (e.beta * 1.8); } });
+            catX = Math.max(40, Math.min(window.innerWidth - 40, catX));
+            catY = Math.max(40, Math.min(window.innerHeight - 40, catY));
+            cat.style.left = catX + 'px'; cat.style.top = catY + 'px';
         });
 
         function gameLoop() {
             if (active && !isFlashing) {
-                // Spawn Golden Yarn at 10 seconds
-                if (timeLeft <= 10 && !goldSpawned) {
-                    createRoamingItem('gold-yarn', '🌟', 6);
-                    goldSpawned = true;
-                }
-
+                if (timeLeft <= 10 && !goldSpawned) { createItem('gold-yarn', '🌟', 6); goldSpawned = true; }
                 items.forEach(item => {
-                    item.x += item.dx;
-                    item.y += item.dy;
-                    if (item.x <= 0 || item.x >= window.innerWidth - 50) item.dx *= -1;
-                    if (item.y <= 60 || item.y >= window.innerHeight - 60) item.dy *= -1;
-                    item.el.style.left = item.x + 'px';
-                    item.el.style.top = item.y + 'px';
-
-                    if (Math.hypot(catX - item.x, catY - item.y) < 55) {
+                    item.x += item.dx; item.y += item.dy;
+                    if (item.x < 30 || item.x > window.innerWidth - 30) item.dx *= -1;
+                    if (item.y < 30 || item.y > window.innerHeight - 30) item.dy *= -1;
+                    item.el.style.left = item.x + 'px'; item.el.style.top = item.y + 'px';
+                    if (Math.hypot(catX - item.x, catY - item.y) < 60) {
                         if (item.type === 'yarn') {
-                            score++;
+                            score++; playSound(600, 'sine', 0.2, 300); createParticles(item.x, item.y, '#fff');
                             respawnItem(item);
                         } else if (item.type === 'gold-yarn') {
-                            score += 10;
-                            item.el.remove();
+                            score += 10; playSound(1000, 'triangle', 0.5, 500); item.el.remove();
                             items = items.filter(i => i !== item);
                         } else if (item.type === 'water') {
                             triggerWaterHit();
                         }
                         scoreEl.innerText = score;
+                        document.getElementById('s-box').classList.add('score-pop');
+                        setTimeout(() => document.getElementById('s-box').classList.remove('score-pop'), 300);
                     }
                 });
             }
@@ -142,46 +177,65 @@
         }
 
         function triggerWaterHit() {
-            isFlashing = true;
-            score = Math.max(0, score - 3);
+            isFlashing = true; score = Math.max(0, score - 3); playSound(100, 'sawtooth', 0.5, -50);
             trees.forEach(t => t.el.style.opacity = '0');
-            let f = 0;
-            let inv = setInterval(() => {
-                document.body.classList.toggle('flash');
-                if (++f === 6) {
-                    clearInterval(inv);
-                    document.body.classList.remove('flash');
-                    spawnTrees();
-                    isFlashing = false;
-                }
-            }, 100).then;
+            let f = 0; const inv = setInterval(() => {
+                document.body.classList.toggle('flash-red');
+                if (++f === 6) { clearInterval(inv); document.body.classList.remove('flash-red'); spawnTrees(); isFlashing = false; }
+            }, 100);
             items.filter(i => i.type === 'water').forEach(w => respawnItem(w));
         }
 
         function respawnItem(item) {
-            item.x = Math.random() * (window.innerWidth - 50);
-            item.y = Math.random() * (window.innerHeight - 120) + 60;
+            item.x = Math.random() * (window.innerWidth - 60) + 30;
+            item.y = Math.random() * (window.innerHeight - 150) + 75;
+        }
+
+        function endGame() {
+            active = false;
+            if(score > highScore) { highScore = score; localStorage.setItem('pt_deluxe_score', score); }
+            
+            // Show Video
+            videoCont.style.display = 'flex';
+            video.play();
+            
+            setTimeout(() => {
+                video.pause();
+                videoCont.style.display = 'none';
+                showFinalMenu();
+            }, 6000);
+        }
+
+        function showFinalMenu() {
+            statsDisplay.innerHTML = `GAME OVER<br>Score: ${score} | Best: ${highScore}`;
+            menuBtns.innerHTML = `
+                <button class="btn btn-play" onclick="location.reload()">PLAY AGAIN</button>
+                <button class="btn btn-share" id="sh-btn">SHARE</button>
+                <button class="btn btn-donate" onclick="window.open('https://paypal.me/yourlink','_blank')">DONATE</button>
+            `;
+            document.getElementById('sh-btn').onclick = () => {
+                const txt = `Can you beat me? I got ${score} in PussyTilt! ${window.location.href}`;
+                if (navigator.share) navigator.share({title: 'PussyTilt', text: txt, url: window.location.href});
+                else alert("Score copied!");
+            };
+            overlay.style.display = 'flex';
         }
 
         startBtn.onclick = () => {
-            if (timeLeft <= 0) location.reload();
-            active = true;
-            msg.style.display = 'none';
-            let timerInterval = setInterval(() => {
+            audioCtx.resume(); active = true; overlay.style.display = 'none';
+            items = []; 
+            for(let i=0; i<5; i++) createItem('yarn', '🧶', 2.5);
+            createItem('water', '💧', 1.8);
+            spawnTrees();
+            const t = setInterval(() => {
                 if(active && !isFlashing) {
-                    timeLeft--;
-                    timerEl.innerText = timeLeft;
-                    if (timeLeft <= 0) {
-                        clearInterval(timerInterval);
-                        active = false;
-                        msg.innerHTML = `<h1>TIME'S UP!</h1><p>Final Score: ${score}</p><button onclick="location.reload()">PLAY AGAIN</button>`;
-                        msg.style.display = 'flex';
-                    }
+                    timeLeft--; timerEl.innerText = timeLeft;
+                    if(timeLeft <= 0) { clearInterval(t); endGame(); }
                 }
             }, 1000);
+            requestAnimationFrame(gameLoop);
         };
 
-        init();
     </script>
 </body>
 </html>
