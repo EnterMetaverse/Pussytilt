@@ -2,66 +2,146 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tilt Tracker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Fat Cat Tilt Chase</title>
     <style>
-        body {
-            margin: 0;
-            overflow: hidden; /* Stops the screen from scrolling */
-            background-color: #f0f0f0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            font-family: sans-serif;
-        }
-
-        #dot {
-            width: 50px;
-            height: 50px;
-            background-color: #ff4757;
-            border-radius: 50%;
-            position: absolute;
-            transition: 0.1s linear; /* Makes the movement smooth */
-        }
-
-        #status {
-            position: fixed;
-            top: 20px;
-            text-align: center;
-            color: #333;
-        }
+        body { margin: 0; overflow: hidden; background-color: #a2d149; font-family: sans-serif; touch-action: none; }
+        #game-ui { position: fixed; top: 10px; width: 100%; display: flex; justify-content: space-around; font-weight: bold; font-size: 20px; z-index: 10; color: white; text-shadow: 2px 2px 4px #000; }
+        .sprite { position: absolute; display: flex; justify-content: center; align-items: center; font-size: 40px; transition: 0.1s linear; }
+        #cat { font-size: 60px; z-index: 5; }
+        #msg { position: fixed; top: 50%; width: 100%; text-align: center; font-size: 30px; display: none; background: rgba(0,0,0,0.7); color: white; padding: 20px 0; z-index: 20; }
+        .tree { font-size: 50px; z-index: 2; }
     </style>
 </head>
 <body>
 
-    <div id="status">Tilt your phone to move the dot!</div>
-    <div id="dot"></div>
+    <div id="game-ui">
+        <div>Time: <span id="timer">60</span></div>
+        <div>Score: <span id="score">0</span></div>
+    </div>
+
+    <div id="msg">TAP TO START</div>
+    <div id="cat" class="sprite">🐈</div>
 
     <script>
-        const dot = document.getElementById('dot');
+        const cat = document.getElementById('cat');
+        const scoreEl = document.getElementById('score');
+        const timerEl = document.getElementById('timer');
+        const msg = document.getElementById('msg');
+
+        let score = 0;
+        let timeLeft = 60;
+        let active = false;
         
-        // Starting position (center of screen)
-        let posX = window.innerWidth / 2;
-        let posY = window.innerHeight / 2;
+        // Game state
+        let catX = window.innerWidth / 2;
+        let catY = window.innerHeight / 2;
+        let yarns = [];
+        let trees = [];
+        let water = { x: 0, y: 0, el: null };
 
-        // Listen for the device orientation (the tilt)
+        // 1. Create Yarn, Water, and Trees
+        function init() {
+            // Create 5 Yarn balls
+            for(let i=0; i<5; i++) createItem('yarn', '🧶');
+            // Create 5 Trees
+            for(let i=0; i<5; i++) createItem('tree', '🌲');
+            // Create 1 Water drop
+            createItem('water', '💧');
+            
+            msg.style.display = 'block';
+        }
+
+        function createItem(type, emoji) {
+            const el = document.createElement('div');
+            el.className = 'sprite ' + type;
+            el.innerHTML = emoji;
+            const x = Math.random() * (window.innerWidth - 50);
+            const y = Math.random() * (window.innerHeight - 50);
+            el.style.left = x + 'px';
+            el.style.top = y + 'px';
+            document.body.appendChild(el);
+            
+            const obj = { x, y, el };
+            if (type === 'yarn') yarns.push(obj);
+            if (type === 'tree') trees.push(obj);
+            if (type === 'water') water = obj;
+        }
+
+        // 2. Movement Logic
         window.addEventListener('deviceorientation', (event) => {
-            // Gamma is left-to-right tilt (-90 to 90)
-            // Beta is front-to-back tilt (-180 to 180)
-            let x = event.gamma; 
-            let y = event.beta;  
+            if (!active) return;
+            
+            let dx = event.gamma * 0.8; // Left/Right
+            let dy = event.beta * 0.8;  // Front/Back
 
-            // Constrain the movement so it stays on screen
-            // We multiply by 5 to make the movement more noticeable
-            posX = (window.innerWidth / 2) + (x * 5);
-            posY = (window.innerHeight / 2) + (y * 5);
+            let nextX = catX + dx;
+            let nextY = catY + dy;
 
-            // Move the dot!
-            dot.style.left = `${posX - 25}px`;
-            dot.style.top = `${posY - 25}px`;
+            // Collision with Trees (Obstacles)
+            let hittingTree = trees.some(t => 
+                Math.abs(nextX - t.x) < 40 && Math.abs(nextY - t.y) < 40
+            );
+
+            if (!hittingTree) {
+                // Keep inside screen
+                catX = Math.max(0, Math.min(window.innerWidth - 60, nextX));
+                catY = Math.max(50, Math.min(window.innerHeight - 60, nextY));
+                
+                cat.style.left = catX + 'px';
+                cat.style.top = catY + 'px';
+            }
+
+            checkCollisions();
         });
+
+        function checkCollisions() {
+            // Catch Yarn
+            yarns.forEach(y => {
+                if (Math.abs(catX - y.x) < 40 && Math.abs(catY - y.y) < 40) {
+                    score++;
+                    scoreEl.innerText = score;
+                    respawn(y);
+                }
+            });
+
+            // Hit Water
+            if (Math.abs(catX - water.x) < 40 && Math.abs(catY - water.y) < 40) {
+                score = Math.max(0, score - 3);
+                scoreEl.innerText = score;
+                respawn(water);
+            }
+        }
+
+        function respawn(obj) {
+            obj.x = Math.random() * (window.innerWidth - 50);
+            obj.y = Math.random() * (window.innerHeight - 100) + 50;
+            obj.el.style.left = obj.x + 'px';
+            obj.el.style.top = obj.y + 'px';
+        }
+
+        // 3. Start & Timer
+        msg.onclick = () => {
+            if (timeLeft <= 0) location.reload();
+            active = true;
+            msg.style.display = 'none';
+            startTimer();
+        };
+
+        function startTimer() {
+            let countdown = setInterval(() => {
+                timeLeft--;
+                timerEl.innerText = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(countdown);
+                    active = false;
+                    msg.innerHTML = "GAME OVER!<br>Score: " + score + "<br>Tap to Restart";
+                    msg.style.display = 'block';
+                }
+            }, 1000);
+        }
+
+        init();
     </script>
 </body>
 </html>
- 
