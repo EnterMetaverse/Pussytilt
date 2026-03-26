@@ -3,14 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PussyTilt: Iron Cage</title>
+    <title>PussyTilt: Anchored Edition</title>
     <style>
         :root { --gold: #f9ca24; --diamond: #70a1ff; --green: #2ecc71; --yellow: #f1c40f; --red: #e74c3c; }
         body { margin: 0; overflow: hidden; background-color: #7cb342; background-image: radial-gradient(#ffffff 2px, transparent 2px), radial-gradient(#f9ca24 2px, transparent 2px); background-size: 50px 50px; background-position: 0 0, 25px 25px; font-family: 'Arial Rounded MT Bold', sans-serif; touch-action: none; }
         
-        #game-ui { position: fixed; top: 15px; width: 100%; display: flex; justify-content: space-around; font-size: 26px; z-index: 10; color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); pointer-events: none; }
+        /* FIXED, SOLID TOP BAR */
+        #game-ui { position: fixed; top: 0; left: 0; width: 100%; background: rgba(0, 0, 0, 0.6); padding: 10px 0; display: flex; justify-content: space-around; font-size: 24px; z-index: 999; color: white; text-shadow: 2px 2px 4px #000; pointer-events: none; box-sizing: border-box; margin: 0; }
+        
         .sprite { position: absolute; display: flex; justify-content: center; align-items: center; pointer-events: none; transform: translate(-50%, -50%); }
-        #cat { font-size: 70px; z-index: 5; filter: drop-shadow(0 5px 10px rgba(0,0,0,0.3)); }
+        #cat { font-size: 70px; z-index: 5; filter: drop-shadow(0 5px 10px rgba(0,0,0,0.3)); transition: opacity 0.2s; }
         .tree { font-size: 110px; z-index: 2; }
         .yarn { font-size: 60px; }
         .water { font-size: 30px; filter: drop-shadow(0 0 8px #2980b9); }
@@ -21,10 +23,10 @@
         @keyframes wobble { 0%, 100% { transform: rotate(-2deg); } 50% { transform: rotate(2deg); } }
         #title { font-size: 60px; color: var(--gold); text-shadow: 4px 4px 0px #000; animation: cartoonDrop 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, wobble 2s ease-in-out infinite 0.8s; margin-bottom: 10px; }
 
-        #overlay { position: fixed; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; background: rgba(0,0,0,0.95); color: white; z-index: 30; text-align: center; padding: 20px; }
+        #overlay { position: fixed; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; background: rgba(0,0,0,0.95); color: white; z-index: 1000; text-align: center; padding: 20px; }
         .btn { padding: 15px 35px; font-size: 20px; border-radius: 50px; border: none; color: white; margin: 8px; font-weight: bold; width: 240px; box-shadow: 0 6px 0 rgba(0,0,0,0.3); cursor: pointer; }
         
-        /* THE FIXED METRONOME */
+        /* METRONOME */
         #wiz-box { background: #2c3e50; padding: 20px; border-radius: 20px; border: 4px solid var(--gold); display: none; margin-bottom: 20px; }
         #lever-track { width: 300px; height: 35px; background: #444; border-radius: 10px; position: relative; margin: 20px 0; overflow: hidden; border: 3px solid #666;}
         .zone { height: 100%; position: absolute; }
@@ -33,7 +35,7 @@
         .green-zone { width: 80px; background: var(--green); left: 110px; }
         #apple { font-size: 30px; position: absolute; top: -4px; z-index: 10; transition: left 0.05s linear; }
 
-        #video-container { position: fixed; inset: 0; background: black; display: none; z-index: 40; justify-content: center; align-items: center; }
+        #video-container { position: fixed; inset: 0; background: black; display: none; z-index: 1001; justify-content: center; align-items: center; }
         video { width: 100%; height: 100%; object-fit: cover; }
         .flash-red { background: #ff4757 !important; }
         .timer-red { color: var(--red) !important; font-size: 35px !important; transition: 0.2s; }
@@ -83,8 +85,15 @@
         
         let score = 0, timeLeft = 30, active = false, mode = "yarn", items = [], trees = [];
         let catX = window.innerWidth / 2, catY = window.innerHeight / 2;
+        
+        // Tilt variables separated from frame-rate to prevent glitches
+        let tiltX = 0, tiltY = 0;
+        
         let applePos = 0, appleDir = 1, wizActive = false;
-        const margin = 45; // Strict 45px safety wall for the entire screen
+        let waterCooldown = false; // Prevents multiple water hits per second
+
+        let highScore = localStorage.getItem('pt_deluxe_score') || 0;
+        document.getElementById('high-score').innerText = highScore;
 
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playSfx(f, t, d, s=0, v=0.1) {
@@ -109,7 +118,8 @@
             trees.forEach(t => t.el.remove()); trees = [];
             for(let i=0; i<5; i++) {
                 const el = document.createElement('div'); el.className = 'sprite tree'; el.innerHTML = '🌲'; document.body.appendChild(el);
-                let tx = Math.random() * (window.innerWidth - 140) + 70, ty = Math.random() * (window.innerHeight - 200) + 100;
+                let tx = Math.random() * (window.innerWidth - 140) + 70;
+                let ty = Math.random() * (window.innerHeight - 250) + 120; // Stays away from top bar
                 el.style.left = tx + 'px'; el.style.top = ty + 'px';
                 trees.push({el, x: tx, y: ty});
             }
@@ -117,45 +127,53 @@
 
         function createItem(type, emoji, speed) {
             const el = document.createElement('div'); el.className = 'sprite ' + type; el.innerHTML = emoji; document.body.appendChild(el);
-            let x = Math.random() * (window.innerWidth - margin*2) + margin;
-            let y = Math.random() * (window.innerHeight - margin*2) + margin;
+            let x = Math.random() * (window.innerWidth - 80) + 40;
+            let y = Math.random() * (window.innerHeight - 130) + 90; // Stays away from top bar
             items.push({ el, type, baseSpeed: speed, x, y, dx: (Math.random()-0.5)*speed, dy: (Math.random()-0.5)*speed });
         }
 
+        // Just records tilt data. Physics happen in the Game Loop.
         window.addEventListener('deviceorientation', (e) => {
-            if (!active) return;
-            let nX = catX + (e.gamma * 1.8), nY = catY + (e.beta * 1.8);
-            
-            // 1. Resolve Tree Collisions first
-            if (trees.some(t => Math.hypot(nX - t.x, nY - t.y) < 70)) {
-                nX = catX; nY = catY; // Block movement if hitting tree
+            if (active) {
+                tiltX = e.gamma * 1.8;
+                tiltY = e.beta * 1.8;
             }
-
-            // 2. ABSOLUTE IRON CAGE (Cat cannot leave screen ever)
-            catX = Math.max(margin, Math.min(window.innerWidth - margin, nX));
-            catY = Math.max(margin, Math.min(window.innerHeight - margin, nY));
-            
-            cat.style.left = catX + 'px'; cat.style.top = catY + 'px';
         });
 
         function gameLoop() {
             if (active) {
+                // 1. Move Cat safely
+                let nX = catX + tiltX;
+                let nY = catY + tiltY;
+
+                // Stop at trees
+                if (trees.some(t => Math.hypot(nX - t.x, nY - t.y) < 70)) {
+                    nX = catX; nY = catY; 
+                }
+
+                // ABSOLUTE BOUNDARIES (35px cat radius + 55px top UI bar)
+                catX = Math.max(35, Math.min(window.innerWidth - 35, nX));
+                catY = Math.max(85, Math.min(window.innerHeight - 35, nY));
+                
+                cat.style.left = catX + 'px'; cat.style.top = catY + 'px';
+
+                // 2. Move Items safely
                 const elapsed = mode === "yarn" ? 30 - timeLeft : 10 - timeLeft;
                 const speedMult = mode === "yarn" ? 1.0 + (Math.abs(Math.sin(elapsed*0.2))*0.5) : 1.2;
                 
                 items.forEach(item => {
                     item.x += (item.dx * speedMult); item.y += (item.dy * speedMult);
                     
-                    // ABSOLUTE IRON CAGE FOR ITEMS (Clamps them inside the screen securely)
-                    if (item.x <= margin) { item.x = margin; item.dx *= -1; }
-                    else if (item.x >= window.innerWidth - margin) { item.x = window.innerWidth - margin; item.dx *= -1; }
+                    // Bounce strictly inside screen (accounts for UI bar at top)
+                    if (item.x <= 30) { item.x = 30; item.dx *= -1; }
+                    else if (item.x >= window.innerWidth - 30) { item.x = window.innerWidth - 30; item.dx *= -1; }
                     
-                    if (item.y <= margin) { item.y = margin; item.dy *= -1; }
-                    else if (item.y >= window.innerHeight - margin) { item.y = window.innerHeight - margin; item.dy *= -1; }
+                    if (item.y <= 85) { item.y = 85; item.dy *= -1; }
+                    else if (item.y >= window.innerHeight - 30) { item.y = window.innerHeight - 30; item.dy *= -1; }
                     
                     item.el.style.left = item.x + 'px'; item.el.style.top = item.y + 'px';
 
-                    // Collision checking
+                    // 3. Collision Logic
                     if (Math.hypot(catX - item.x, catY - item.y) < 60) {
                         if (item.type === 'yarn') {
                             score++; scoreEl.innerText = score; playSfx(600,'sine',0.2,200);
@@ -164,8 +182,18 @@
                             score++; scoreEl.innerText = score; playSfx(800,'triangle',0.2,300);
                             item.el.remove(); items = items.filter(i => i !== item); createItem('fishbone', '🦴', 3.5);
                         } else if (item.type === 'water') {
-                            score = Math.max(0, score-3); scoreEl.innerText = score; playSfx(150,'sawtooth',0.4);
-                            document.body.classList.add('flash-red'); setTimeout(()=>document.body.classList.remove('flash-red'),100);
+                            if (!waterCooldown) {
+                                score = Math.max(0, score-3); scoreEl.innerText = score; playSfx(150,'sawtooth',0.4);
+                                document.body.classList.add('flash-red'); setTimeout(()=>document.body.classList.remove('flash-red'),100);
+                                
+                                // INVINCIBILITY FRAME (1 Second)
+                                waterCooldown = true;
+                                cat.style.opacity = '0.4';
+                                setTimeout(() => {
+                                    waterCooldown = false;
+                                    cat.style.opacity = '1';
+                                }, 1000);
+                            }
                         }
                     }
                 });
@@ -182,19 +210,24 @@
             audioCtx.resume();
             if(mode === "yarn") {
                 overlay.style.display = 'none'; active = true; spawnTrees();
+                score = 0; scoreEl.innerText = 0;
                 for(let i=0; i<3; i++) createItem('yarn', '🧶', 2.5); createItem('water', '💧', 1.8);
                 const t = setInterval(() => {
-                    timeLeft--; timerEl.innerText = timeLeft;
-                    if(timeLeft <= 0) { clearInterval(t); active = false; playCheer(); startMetronome(); }
+                    if(active) {
+                        timeLeft--; timerEl.innerText = timeLeft;
+                        if(timeLeft <= 0) { clearInterval(t); active = false; playCheer(); startMetronome(); }
+                    }
                 }, 1000);
             } else if (mode === "fish") {
                 overlay.style.display = 'none'; timeLeft = 10; timerEl.innerText = 10;
                 active = true; items.forEach(i => i.el.remove()); items = [];
                 for(let i=0; i<4; i++) createItem('fishbone', '🦴', 4);
                 const ft = setInterval(() => {
-                    timeLeft--; timerEl.innerText = timeLeft;
-                    if (timeLeft <= 3 && timeLeft > 0) { playSfx(80, 'sine', 0.1, 0, 0.3); timerEl.classList.add('timer-red'); }
-                    if(timeLeft <= 0) { clearInterval(ft); active = false; playCheer(); timerEl.classList.remove('timer-red'); endSequence(); }
+                    if(active) {
+                        timeLeft--; timerEl.innerText = timeLeft;
+                        if (timeLeft <= 3 && timeLeft > 0) { playSfx(80, 'sine', 0.1, 0, 0.3); timerEl.classList.add('timer-red'); }
+                        if(timeLeft <= 0) { clearInterval(ft); active = false; playCheer(); timerEl.classList.remove('timer-red'); endSequence(); }
+                    }
                 }, 1000);
             }
         };
@@ -203,7 +236,7 @@
             setTimeout(() => {
                 statsDisplay.innerHTML = `YARN SCORE: ${score}<br>Catch the Apple!`;
                 actionBtn.style.display = 'none'; wizBox.style.display = 'block'; wizActive = true;
-                let c = 5;
+                let c = 5; document.getElementById('wiz-timer').innerText = `HURRY! ${c}s`;
                 const ci = setInterval(() => {
                     c--; document.getElementById('wiz-timer').innerText = `HURRY! ${c}s`;
                     if(c <= 0 || !wizActive) { clearInterval(ci); if(wizActive) resolveWiz(0); }
@@ -214,7 +247,6 @@
 
         document.getElementById('wiz-stop').onclick = () => {
             let bonus = 0;
-            // 0 (0-40), 5 (40-110), 10 (110-190), 5 (190-260), 0 (260-300)
             if (applePos >= 110 && applePos <= 190) { bonus = 10; playCheer(); }
             else if ((applePos >= 40 && applePos < 110) || (applePos > 190 && applePos <= 260)) bonus = 5;
             else bonus = 0;
@@ -233,6 +265,7 @@
             videoCont.style.display = 'flex'; video.play();
             setTimeout(() => {
                 videoCont.style.display = 'none';
+                if(score > highScore) { highScore = score; localStorage.setItem('pt_deluxe_score', score); document.getElementById('high-score').innerText = highScore; }
                 statsDisplay.innerHTML = `FINAL TOTAL: ${score}`;
                 actionBtn.innerText = "PLAY AGAIN";
                 actionBtn.onclick = () => location.reload();
