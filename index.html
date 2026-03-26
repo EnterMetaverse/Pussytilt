@@ -3,42 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PussyTilt: The Cycle</title>
+    <title>PussyTilt: Cartoon Deluxe</title>
     <style>
         :root { --gold: #f9ca24; --diamond: #70a1ff; --green: #2ecc71; --red: #e74c3c; }
         body { margin: 0; overflow: hidden; background-color: #7cb342; background-image: radial-gradient(#ffffff 2px, transparent 2px), radial-gradient(#f9ca24 2px, transparent 2px); background-size: 50px 50px; background-position: 0 0, 25px 25px; font-family: 'Arial Rounded MT Bold', sans-serif; touch-action: none; }
         
-        #game-ui { position: fixed; top: 15px; width: 100%; display: flex; justify-content: space-around; font-size: 26px; z-index: 10; color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); pointer-events: none; opacity: 0; transition: opacity 0.5s; }
+        #game-ui { position: fixed; top: 15px; width: 100%; display: flex; justify-content: space-around; font-size: 26px; z-index: 10; color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); pointer-events: none; }
         .sprite { position: absolute; display: flex; justify-content: center; align-items: center; pointer-events: none; transform: translate(-50%, -50%); }
         #cat { font-size: 70px; z-index: 5; filter: drop-shadow(0 5px 10px rgba(0,0,0,0.3)); }
         .tree { font-size: 110px; z-index: 2; }
-        .yarn { font-size: 60px; transition: opacity 0.3s; }
+        .yarn { font-size: 60px; }
         .water { font-size: 30px; filter: drop-shadow(0 0 8px #2980b9); }
         .fishbone { font-size: 50px; filter: drop-shadow(0 0 10px white); }
 
-        #overlay { position: fixed; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; background: rgba(0,0,0,0.9); color: white; z-index: 30; text-align: center; padding: 20px; }
+        /* CARTOON TITLE ANIMATION */
+        @keyframes cartoonDrop {
+            0% { transform: translateY(-500px) scale(0.5); opacity: 0; }
+            60% { transform: translateY(30px) scale(1.2); opacity: 1; }
+            80% { transform: translateY(-10px) scale(0.9); }
+            100% { transform: translateY(0) scale(1); }
+        }
+        @keyframes wobble {
+            0%, 100% { transform: rotate(-2deg); }
+            50% { transform: rotate(2deg); }
+        }
+        #title { 
+            font-size: 60px; 
+            color: var(--gold); 
+            text-shadow: 4px 4px 0px #000; 
+            animation: cartoonDrop 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, wobble 2s ease-in-out infinite 0.8s;
+            margin-bottom: 10px;
+        }
+
+        #overlay { position: fixed; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; background: rgba(0,0,0,0.95); color: white; z-index: 30; text-align: center; padding: 20px; }
         .btn { padding: 15px 35px; font-size: 20px; border-radius: 50px; border: none; color: white; margin: 8px; font-weight: bold; width: 240px; box-shadow: 0 6px 0 rgba(0,0,0,0.3); cursor: pointer; }
         
-        /* Metronome */
         #wiz-box { background: #2c3e50; padding: 20px; border-radius: 20px; border: 4px solid var(--gold); display: none; margin-bottom: 20px; }
         #lever-track { width: 300px; height: 35px; background: #444; border-radius: 10px; position: relative; margin: 20px 0; overflow: hidden; border: 3px solid #666;}
         .zone { height: 100%; position: absolute; }
-        .red-zone { width: 40px; background: var(--red); }
-        .yellow-zone { width: 70px; background: #f1c40f; }
-        .green-zone { width: 80px; background: var(--green); left: 110px; }
-        #apple { font-size: 30px; position: absolute; top: -5px; transition: left 0.05s linear; }
+        .red-zone { width: 30px; background: var(--red); }
+        .green-zone { width: 70px; background: var(--green); left: 115px; }
+        #apple { font-size: 30px; position: absolute; top: -5px; }
 
         #video-container { position: fixed; inset: 0; background: black; display: none; z-index: 40; justify-content: center; align-items: center; }
         video { width: 100%; height: 100%; object-fit: cover; }
         .flash-red { background: #ff4757 !important; }
-        .shake { animation: shake 0.5s; }
-        @keyframes shake { 0%, 100% { transform: translate(0,0); } 20% { transform: translate(-5px, 5px); } 40% { transform: translate(5px, -5px); } 60% { transform: translate(-5px, -5px); } 80% { transform: translate(5px, 5px); } }
+        .timer-red { color: var(--red) !important; font-size: 35px !important; transition: 0.2s; }
     </style>
 </head>
 <body>
 
     <div id="game-ui">
-        <div>⏳ <span id="timer">60</span>s</div>
+        <div>⏳ <span id="timer">30</span>s</div>
         <div>🧶 <span id="score">0</span></div>
         <div>🏆 <span id="high-score">0</span></div>
     </div>
@@ -46,23 +62,25 @@
     <div id="video-container"><video id="end-video" playsinline muted><source src="https://videos.pexels.com/video-files/3015488/3015488-uhd_2560_1440_24fps.mp4" type="video/mp4"></video></div>
 
     <div id="overlay">
-        <div id="content-box">
-            <h1 id="title" style="font-size: 50px; color: var(--gold);">PussyTilt</h1>
-            <p id="stats-display" style="font-size: 22px;"></p>
+        <div id="menu-content">
+            <h1 id="title">PussyTilt</h1>
+            <p id="stats-display" style="font-size: 22px; margin-bottom: 15px;"></p>
+            
             <div id="wiz-box">
-                <p id="wiz-timer" style="color:var(--red)">HURRY: 5s</p>
+                <p id="wiz-timer" style="color:var(--red)">HURRY! 5s</p>
                 <div id="lever-track">
-                    <div class="zone red-zone" style="left:0"></div><div class="zone yellow-zone" style="left:40px"></div>
+                    <div class="zone red-zone" style="left:0"></div>
                     <div class="zone green-zone"></div>
-                    <div class="zone yellow-zone" style="left:190px"></div><div class="zone red-zone" style="right:0"></div>
+                    <div class="zone red-zone" style="right:0"></div>
                     <div id="apple">🍏</div>
                 </div>
                 <button class="btn" style="background:var(--diamond)" id="wiz-stop">STOP!</button>
             </div>
+
             <div id="menu-btns">
                 <button class="btn" style="background:#4CAF50" id="action-btn">START YARN HUNT</button>
             </div>
-            <div id="credits" style="font-size: 12px; margin-top: 20px; color: #888;">
+            <div style="font-size: 11px; margin-top: 20px; color: #777;">
                 Tilt my Pussy | Kinetic Art Labs by Dr John Holder
             </div>
         </div>
@@ -73,7 +91,7 @@
     <script>
         const cat = document.getElementById('cat'), scoreEl = document.getElementById('score'), timerEl = document.getElementById('timer'), overlay = document.getElementById('overlay'), actionBtn = document.getElementById('action-btn'), statsDisplay = document.getElementById('stats-display'), wizBox = document.getElementById('wiz-box'), apple = document.getElementById('apple'), videoCont = document.getElementById('video-container'), video = document.getElementById('end-video');
         
-        let score = 0, timeLeft = 60, active = false, mode = "yarn", items = [], trees = [];
+        let score = 0, timeLeft = 30, active = false, mode = "yarn", items = [], trees = [];
         let catX = window.innerWidth / 2, catY = window.innerHeight / 2;
         let applePos = 0, appleDir = 1, wizActive = false;
 
@@ -86,60 +104,72 @@
             o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+d);
         }
 
+        // CARTOON CHEER SFX
+        function playCheer() {
+            // White noise burst for the "shhh" of a crowd
+            const bufferSize = audioCtx.sampleRate * 1.5;
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+            const noise = audioCtx.createBufferSource();
+            noise.buffer = buffer;
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'highpass'; filter.frequency.value = 1000;
+            const gain = audioCtx.createGain();
+            gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1.5);
+            noise.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination);
+            noise.start();
+            // Rising whistle tones
+            [400, 600, 800].forEach((f, i) => {
+                setTimeout(() => playSfx(f, 'sine', 0.5, 400, 0.05), i * 100);
+            });
+        }
+
         function spawnTrees() {
             trees.forEach(t => t.el.remove()); trees = [];
             for(let i=0; i<5; i++) {
                 const el = document.createElement('div'); el.className = 'sprite tree'; el.innerHTML = '🌲'; document.body.appendChild(el);
-                let tx = Math.random() * (window.innerWidth - 100) + 50, ty = Math.random() * (window.innerHeight - 200) + 100;
+                let tx = Math.random() * (window.innerWidth - 120) + 60, ty = Math.random() * (window.innerHeight - 200) + 100;
                 el.style.left = tx + 'px'; el.style.top = ty + 'px';
                 trees.push({el, x: tx, y: ty});
             }
         }
 
-        function createItem(type, emoji, speed, fromEdge = false) {
+        function createItem(type, emoji, speed) {
             const el = document.createElement('div'); el.className = 'sprite ' + type; el.innerHTML = emoji; document.body.appendChild(el);
-            let x, y;
-            if(fromEdge) {
-                const edge = Math.floor(Math.random() * 4); // 0: top, 1: right, 2: bottom, 3: left
-                if(edge === 0) { x = Math.random()*window.innerWidth; y = -50; }
-                else if(edge === 1) { x = window.innerWidth+50; y = Math.random()*window.innerHeight; }
-                else if(edge === 2) { x = Math.random()*window.innerWidth; y = window.innerHeight+50; }
-                else { x = -50; y = Math.random()*window.innerHeight; }
-            } else {
-                x = Math.random()*window.innerWidth; y = Math.random()*window.innerHeight;
-            }
+            let x = Math.random() * (window.innerWidth - 80) + 40, y = Math.random() * (window.innerHeight - 80) + 40;
             items.push({ el, type, baseSpeed: speed, x, y, dx: (Math.random()-0.5)*speed, dy: (Math.random()-0.5)*speed });
         }
 
         window.addEventListener('deviceorientation', (e) => {
             if (!active) return;
             let nX = catX + (e.gamma * 1.8), nY = catY + (e.beta * 1.8);
-            if (!trees.some(t => Math.hypot(nX - t.x, nY - t.y) < 75)) {
-                catX = Math.max(40, Math.min(window.innerWidth - 40, nX));
-                catY = Math.max(40, Math.min(window.innerHeight - 40, nY));
+            if (!trees.some(t => Math.hypot(nX - t.x, nY - t.y) < 70)) {
+                catX = Math.max(45, Math.min(window.innerWidth - 45, nX));
+                catY = Math.max(45, Math.min(window.innerHeight - 45, nY));
             }
             cat.style.left = catX + 'px'; cat.style.top = catY + 'px';
         });
 
         function gameLoop() {
             if (active) {
-                const speedMult = mode === "yarn" ? 1.0 + (Math.abs(Math.sin((60-timeLeft)*0.2))*0.5) : 1;
+                const elapsed = mode === "yarn" ? 30 - timeLeft : 10 - timeLeft;
+                const speedMult = mode === "yarn" ? 1.0 + (Math.abs(Math.sin(elapsed*0.2))*0.5) : 1.2;
                 items.forEach(item => {
                     item.x += (item.dx * speedMult); item.y += (item.dy * speedMult);
-                    if (item.x < -60 || item.x > window.innerWidth + 60) item.dx *= -1;
-                    if (item.y < -60 || item.y > window.innerHeight + 60) item.dy *= -1;
+                    if (item.x < 30 || item.x > window.innerWidth - 30) item.dx *= -1;
+                    if (item.y < 30 || item.y > window.innerHeight - 30) item.dy *= -1;
                     item.el.style.left = item.x + 'px'; item.el.style.top = item.y + 'px';
-
                     if (Math.hypot(catX - item.x, catY - item.y) < 60) {
                         if (item.type === 'yarn') {
                             score++; scoreEl.innerText = score; playSfx(600,'sine',0.2,200);
-                            item.el.remove(); items = items.filter(i => i !== item);
-                            createItem('yarn', '🧶', 2.5, true); // Spawn new from edge
+                            item.el.remove(); items = items.filter(i => i !== item); createItem('yarn', '🧶', 2.5); 
                         } else if (item.type === 'fishbone') {
-                            score += 5; scoreEl.innerText = score; playSfx(800,'triangle',0.3,400);
-                            item.el.remove(); items = items.filter(i => i !== item);
+                            score++; scoreEl.innerText = score; playSfx(800,'triangle',0.2,300);
+                            item.el.remove(); items = items.filter(i => i !== item); createItem('fishbone', '🦴', 3.5);
                         } else if (item.type === 'water') {
-                            score = Math.max(0, score-3); scoreEl.innerText = score; playSfx(100,'sawtooth',0.4);
+                            score = Math.max(0, score-3); scoreEl.innerText = score; playSfx(150,'sawtooth',0.4);
                             document.body.classList.add('flash-red'); setTimeout(()=>document.body.classList.remove('flash-red'),100);
                         }
                     }
@@ -156,70 +186,67 @@
         actionBtn.onclick = () => {
             audioCtx.resume();
             if(mode === "yarn") {
-                overlay.style.display = 'none'; document.getElementById('game-ui').style.opacity = '1';
-                active = true; spawnTrees();
-                for(let i=0; i<3; i++) createItem('yarn', '🧶', 2.5);
-                createItem('water', '💧', 1.8);
+                overlay.style.display = 'none'; active = true; spawnTrees();
+                for(let i=0; i<3; i++) createItem('yarn', '🧶', 2.5); createItem('water', '💧', 1.8);
                 const t = setInterval(() => {
                     timeLeft--; timerEl.innerText = timeLeft;
-                    if(timeLeft <= 0) { clearInterval(t); active = false; startMetronomePhase(); }
+                    if(timeLeft <= 0) { clearInterval(t); active = false; playCheer(); startMetronome(); }
                 }, 1000);
             } else if (mode === "fish") {
-                overlay.style.display = 'none'; active = true;
-                items.forEach(i => i.el.remove()); items = [];
-                for(let i=0; i<3; i++) createItem('fishbone', '🦴', 3);
-                setTimeout(() => { active = false; endEverything(); }, 15000);
+                overlay.style.display = 'none'; timeLeft = 10; timerEl.innerText = 10;
+                active = true; items.forEach(i => i.el.remove()); items = [];
+                for(let i=0; i<4; i++) createItem('fishbone', '🦴', 4);
+                const ft = setInterval(() => {
+                    timeLeft--; timerEl.innerText = timeLeft;
+                    if (timeLeft <= 3 && timeLeft > 0) { playSfx(80, 'sine', 0.1, 0, 0.3); timerEl.classList.add('timer-red'); }
+                    if(timeLeft <= 0) { clearInterval(ft); active = false; playCheer(); timerEl.classList.remove('timer-red'); endSequence(); }
+                }, 1000);
             }
         };
 
-        function startMetronomePhase() {
+        function startMetronome() {
             setTimeout(() => {
-                statsDisplay.innerHTML = `YARN SCORE: ${score}<br>Next: Cat Reactions!`;
-                actionBtn.innerText = "START METRONOME";
-                actionBtn.onclick = () => {
-                    document.getElementById('main-menu').style.display = 'none';
-                    wizBox.style.display = 'block'; wizActive = true;
-                    let countdown = 5;
-                    const c = setInterval(() => {
-                        countdown--; document.getElementById('wiz-timer').innerText = `HURRY: ${countdown}s`;
-                        if(countdown <= 0 || !wizActive) { clearInterval(c); if(wizActive) resolveWiz(0); }
-                    }, 1000);
-                };
-                overlay.style.display = 'flex';
-            }, 2000);
+                statsDisplay.innerHTML = `YARN SCORE: ${score}<br>Catch the Apple!`;
+                actionBtn.style.display = 'none'; wizBox.style.display = 'block'; wizActive = true;
+                let c = 5;
+                const ci = setInterval(() => {
+                    c--; document.getElementById('wiz-timer').innerText = `HURRY! ${c}s`;
+                    if(c <= 0 || !wizActive) { clearInterval(ci); if(wizActive) resolveWiz(0); }
+                }, 1000);
+            }, 1500);
+            overlay.style.display = 'flex';
         }
 
         document.getElementById('wiz-stop').onclick = () => {
             let bonus = 0;
-            if (applePos >= 110 && applePos <= 190) { bonus = 10; document.body.classList.add('shake'); setTimeout(()=>document.body.classList.remove('shake'),500); }
-            else if (applePos <= 40 || applePos >= 260) bonus = 5;
+            if (applePos >= 115 && applePos <= 185) { bonus = 10; playCheer(); }
+            else if (applePos <= 30 || applePos >= 270) bonus = 5;
             resolveWiz(bonus);
         };
 
         function resolveWiz(bonus) {
             wizActive = false; score += bonus; scoreEl.innerText = score;
             wizBox.style.display = 'none';
-            statsDisplay.innerHTML = `BONUS: +${bonus}!<br>Next: THE FISHBONE FEAST`;
-            actionBtn.innerText = "START FISHING";
-            document.getElementById('main-menu').style.display = 'block';
+            statsDisplay.innerHTML = `BONUS: +${bonus}!<br>NEXT: 10s FISHBONE BLITZ`;
+            actionBtn.innerText = "START FISHING"; actionBtn.style.display = 'inline-block';
             mode = "fish";
         }
 
-        function endEverything() {
+        function endSequence() {
             videoCont.style.display = 'flex'; video.play();
             setTimeout(() => {
                 videoCont.style.display = 'none';
                 statsDisplay.innerHTML = `FINAL TOTAL: ${score}`;
                 actionBtn.innerText = "PLAY AGAIN";
                 actionBtn.onclick = () => location.reload();
-                const s = document.createElement('button'); s.className='btn'; s.style.background='#008CBA'; s.innerText='SHARE';
-                s.onclick = () => navigator.share({text: `🐈 Can you beat me? I got 🧶 ${score} in PussyTilt!`});
-                const d = document.createElement('button'); d.className='btn'; d.style.background='#e67e22'; d.innerText='DONATE';
-                document.getElementById('menu-btns').appendChild(s); document.getElementById('menu-btns').appendChild(d);
+                if(!document.getElementById('sh-btn')) {
+                    const b = document.createElement('button'); b.className='btn'; b.id='sh-btn'; b.style.background='#008CBA'; b.innerText='SHARE';
+                    b.onclick = () => navigator.share({text:`🐈 Can you beat me? I got 🧶 ${score} in PussyTilt!`});
+                    document.getElementById('menu-btns').appendChild(b);
+                }
                 overlay.style.display = 'flex';
             }, 6000);
         }
-
         requestAnimationFrame(gameLoop);
     </script>
 </body>
